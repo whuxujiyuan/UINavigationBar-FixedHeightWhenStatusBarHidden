@@ -106,6 +106,10 @@ static char const* const FixedNavigationBarSize = "FixedNavigationBarSize";
 		FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
 		self.fixedHeightWhenStatusBarHidden) {
 		
+        CGRect frame = self.frame;
+        frame.size.height = [self navigationBarHeight] + [self statusBarHeight];
+        self.frame = frame;
+
 		for (UIView *subview in self.subviews) {
 			if ([NSStringFromClass([subview class]) containsString:@"BarBackground"]) {
 				CGRect subViewFrame = subview.frame;
