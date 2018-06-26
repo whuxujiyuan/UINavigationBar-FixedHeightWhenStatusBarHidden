@@ -17,137 +17,140 @@
 #import <objc/runtime.h>
 
 #define FYIsIOSVersionGreaterThanOrEqualTo(v) \
-	([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
-#define IS_PORTRAIT UIDeviceOrientationIsPortrait([UIDevice currentDevice].orientation)
+#define IS_PORTRAIT YES// UIDeviceOrientationIsPortrait([UIDevice currentDevice].orientation)
 
-#define IS_IPHONE	(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
-#define IS_IPHONE_X	(IS_IPHONE && MAX([[UIScreen mainScreen] bounds].size.width, [[UIScreen mainScreen] bounds].size.height) == 812.0)
+#define IS_IPHONE    (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+#define IS_IPHONE_X    (IS_IPHONE && MAX([[UIScreen mainScreen] bounds].size.width, [[UIScreen mainScreen] bounds].size.height) == 812.0)
 
 static char const* const FixedNavigationBarSize = "FixedNavigationBarSize";
 
 @implementation UINavigationBar (FixedHeightWhenStatusBarHidden)
 
 - (float)statusBarHeight {
-	if (IS_PORTRAIT) {
-		if (IS_IPHONE_X) {
-			return 44;
-		} else {
-			return 20;
-		}
-	} else {
-		if (IS_IPHONE_X) {
-			return 0;
-		} else {
-			return 20;
-		}
-	}
+    if (IS_PORTRAIT) {
+        if (IS_IPHONE_X) {
+            return 44;
+        } else {
+            return 20;
+        }
+    } else {
+        if (IS_IPHONE_X) {
+            return 0;
+        } else {
+            return 20;
+        }
+    }
 }
 
 - (float)navigationBarHeight {
-	if (IS_PORTRAIT || !IS_IPHONE) {
-		return 44;
-	} else {
-		return 32;
-	}
+    if (IS_PORTRAIT || !IS_IPHONE) {
+        return 44;
+    } else {
+        return 32;
+    }
 }
 
 - (UIEdgeInsets)additionalSafeAreaInsets {
-	if ([UIApplication sharedApplication].isStatusBarHidden &&
-		FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
-		self.fixedHeightWhenStatusBarHidden) {
-		return (IS_IPHONE_X) ? UIEdgeInsetsZero : UIEdgeInsetsMake([self statusBarHeight], 0, 0, 0);
-	} else {
-		return UIEdgeInsetsZero;
-	}
+    if ([UIApplication sharedApplication].isStatusBarHidden &&
+        FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
+        self.fixedHeightWhenStatusBarHidden) {
+        return (IS_IPHONE_X) ? UIEdgeInsetsZero : UIEdgeInsetsMake([self statusBarHeight], 0, 0, 0);
+    } else {
+        return UIEdgeInsetsZero;
+    }
 }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
 
 - (void)setAdditionalSafeAreaInsetsForViewController:(UIViewController*)viewController {
-	if ([viewController respondsToSelector:NSSelectorFromString(@"setAdditionalSafeAreaInsets:")]) {
-		[viewController performSelector:NSSelectorFromString(@"setAdditionalSafeAreaInsets:") withObject:[NSValue valueWithUIEdgeInsets:[self additionalSafeAreaInsets]]];
-	}
+    if ([viewController respondsToSelector:NSSelectorFromString(@"setAdditionalSafeAreaInsets:")]) {
+        [viewController performSelector:NSSelectorFromString(@"setAdditionalSafeAreaInsets:") withObject:[NSValue valueWithUIEdgeInsets:[self additionalSafeAreaInsets]]];
+    }
 }
 
 #pragma clang diagnostic pop
 
 - (CGSize)sizeThatFits_FixedHeightWhenStatusBarHidden:(CGSize)size
 {
-	if ([UIApplication sharedApplication].statusBarHidden &&
-		FYIsIOSVersionGreaterThanOrEqualTo(@"7.0") &&
-		self.fixedHeightWhenStatusBarHidden)
-	{
-		CGSize newSize = CGSizeMake(self.frame.size.width, [self navigationBarHeight] + [self statusBarHeight]);
-		return newSize;
-	}
-	else
-	{
-		return [self sizeThatFits_FixedHeightWhenStatusBarHidden:size];
-	}
+    if (!IS_IPHONE_X &&
+        [UIApplication sharedApplication].statusBarHidden &&
+        FYIsIOSVersionGreaterThanOrEqualTo(@"7.0") &&
+        self.fixedHeightWhenStatusBarHidden)
+    {
+        CGSize newSize = CGSizeMake(self.frame.size.width, [self navigationBarHeight] + [self statusBarHeight]);
+        return newSize;
+    }
+    else
+    {
+        return [self sizeThatFits_FixedHeightWhenStatusBarHidden:size];
+    }
 }
 
 - (void)setFrame_FixedHeightWhenStatusBarHidden:(CGRect)frame
 {
-	if ([UIApplication sharedApplication].isStatusBarHidden &&
-		FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
-		self.fixedHeightWhenStatusBarHidden) {
-		frame.size.height = [self navigationBarHeight] + [self statusBarHeight];
-	}
-	[self setFrame_FixedHeightWhenStatusBarHidden:frame];
+    if (!IS_IPHONE_X &&
+        [UIApplication sharedApplication].isStatusBarHidden &&
+        FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
+        self.fixedHeightWhenStatusBarHidden) {
+        frame.size.height = [self navigationBarHeight] + [self statusBarHeight];
+    }
+    [self setFrame_FixedHeightWhenStatusBarHidden:frame];
 }
 
 - (void)layoutSubviews_FixedHeightWhenStatusBarHidden
 {
-	[self layoutSubviews_FixedHeightWhenStatusBarHidden];
-	
-	if ([UIApplication sharedApplication].isStatusBarHidden &&
-		FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
-		self.fixedHeightWhenStatusBarHidden) {
-		
+    [self layoutSubviews_FixedHeightWhenStatusBarHidden];
+    
+    if (!IS_IPHONE_X &&
+        [UIApplication sharedApplication].isStatusBarHidden &&
+        FYIsIOSVersionGreaterThanOrEqualTo(@"11.0") &&
+        self.fixedHeightWhenStatusBarHidden) {
+        
         CGRect frame = self.frame;
         frame.size.height = [self navigationBarHeight] + [self statusBarHeight];
         self.frame = frame;
-
-		for (UIView *subview in self.subviews) {
-			if ([NSStringFromClass([subview class]) containsString:@"BarBackground"]) {
-				CGRect subViewFrame = subview.frame;
-				subViewFrame.origin.y = 0;
-				subViewFrame.size.height = [self navigationBarHeight] + [self statusBarHeight];
-				[subview setFrame: subViewFrame];
-			}
-			if ([NSStringFromClass([subview class]) containsString:@"BarContentView"]) {
-				CGRect subViewFrame = subview.frame;
-				subViewFrame.origin.y = [self statusBarHeight];
-				subViewFrame.size.height = [self navigationBarHeight];
-				[subview setFrame: subViewFrame];
-			}
-		}
-	}
+        
+        for (UIView *subview in self.subviews) {
+            if ([NSStringFromClass([subview class]) containsString:@"BarBackground"]) {
+                CGRect subViewFrame = subview.frame;
+                subViewFrame.origin.y = 0;
+                subViewFrame.size.height = [self navigationBarHeight] + [self statusBarHeight];
+                [subview setFrame: subViewFrame];
+            }
+            if ([NSStringFromClass([subview class]) containsString:@"BarContentView"]) {
+                CGRect subViewFrame = subview.frame;
+                subViewFrame.origin.y = [self statusBarHeight];
+                subViewFrame.size.height = [self navigationBarHeight];
+                [subview setFrame: subViewFrame];
+            }
+        }
+    }
 }
 
 - (BOOL)fixedHeightWhenStatusBarHidden
 {
-	return [objc_getAssociatedObject(self, FixedNavigationBarSize) boolValue];
+    return [objc_getAssociatedObject(self, FixedNavigationBarSize) boolValue];
 }
 
 - (void)setFixedHeightWhenStatusBarHidden:(BOOL)fixedHeightWhenStatusBarHidden
 {
-	objc_setAssociatedObject(self, FixedNavigationBarSize,
-		[NSNumber numberWithBool:fixedHeightWhenStatusBarHidden], OBJC_ASSOCIATION_RETAIN);
+    objc_setAssociatedObject(self, FixedNavigationBarSize,
+                             [NSNumber numberWithBool:fixedHeightWhenStatusBarHidden], OBJC_ASSOCIATION_RETAIN);
 }
 
 + (void)load
 {
-	method_exchangeImplementations(class_getInstanceMethod(self, @selector(sizeThatFits:)),
-		class_getInstanceMethod(self, @selector(sizeThatFits_FixedHeightWhenStatusBarHidden:)));
-	
-	method_exchangeImplementations(class_getInstanceMethod(self, @selector(setFrame:)),
-								   class_getInstanceMethod(self, @selector(setFrame_FixedHeightWhenStatusBarHidden:)));
-	
-	method_exchangeImplementations(class_getInstanceMethod(self, @selector(layoutSubviews)),
-								   class_getInstanceMethod(self, @selector(layoutSubviews_FixedHeightWhenStatusBarHidden)));
+    method_exchangeImplementations(class_getInstanceMethod(self, @selector(sizeThatFits:)),
+                                   class_getInstanceMethod(self, @selector(sizeThatFits_FixedHeightWhenStatusBarHidden:)));
+    
+    method_exchangeImplementations(class_getInstanceMethod(self, @selector(setFrame:)),
+                                   class_getInstanceMethod(self, @selector(setFrame_FixedHeightWhenStatusBarHidden:)));
+    
+    method_exchangeImplementations(class_getInstanceMethod(self, @selector(layoutSubviews)),
+                                   class_getInstanceMethod(self, @selector(layoutSubviews_FixedHeightWhenStatusBarHidden)));
 }
 
 @end
